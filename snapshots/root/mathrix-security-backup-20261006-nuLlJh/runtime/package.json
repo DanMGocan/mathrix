@@ -1,0 +1,51 @@
+{
+  "name": "mathrix",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "next dev --hostname 0.0.0.0",
+    "dev:server": "tsx watch --env-file=.env server/index.ts",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "server": "tsx --env-file=.env server/index.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-test-module-mocks --import tsx --test tests/engine.test.ts tests/room.test.ts tests/ai.test.ts tests/security.test.ts tests/h5-ads.test.ts tests/lifecycle.test.ts tests/design-files.test.ts tests/premium.test.ts tests/metrics.test.ts tests/email.test.ts",
+    "test:integration": "tsx --env-file=.env --test tests/server.test.ts",
+    "test:e2e": "playwright test",
+    "test:system": "bash scripts/test-system.sh",
+    "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "db:seed": "tsx --env-file=.env scripts/seed.ts"
+  },
+  "dependencies": {
+    "better-auth": "1.7.7",
+    "next": "16.3.8",
+    "pg": "^8.16.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "redis": "^5.10.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "stripe": "^23.0.0",
+    "tsx": "^4.21.0",
+    "zod": "^4.3.6",
+    "nodemailer": "^10.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.19.0",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "16.3.8",
+    "prettier": "^3.8.0",
+    "typescript": "^5.9.3",
+    "@types/nodemailer": "^8.0.2"
+  },
+  "type": "module"
+}

@@ -1,0 +1,24 @@
+[Unit]
+Description=Mathrix authoritative multiplayer service
+After=network.target postgresql.service redis-server.service
+Requires=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=mathrix
+Group=mathrix
+WorkingDirectory=/srv/mathrix
+EnvironmentFile=/etc/mathrix.env
+ExecStart=/usr/bin/node --import tsx server/index.ts
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mathrix
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

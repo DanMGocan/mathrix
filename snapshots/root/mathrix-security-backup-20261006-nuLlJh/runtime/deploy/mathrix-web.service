@@ -1,0 +1,24 @@
+[Unit]
+Description=Mathrix Next.js web application
+After=network.target mathrix-game.service
+Wants=mathrix-game.service
+
+[Service]
+Type=simple
+User=mathrix
+Group=mathrix
+WorkingDirectory=/srv/mathrix
+EnvironmentFile=/etc/mathrix.env
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/node .next/standalone/server.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/mathrix/.next /var/lib/mathrix
+
+[Install]
+WantedBy=multi-user.target

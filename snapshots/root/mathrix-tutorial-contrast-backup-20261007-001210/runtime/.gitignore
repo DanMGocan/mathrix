@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+backups/
+*.log
+
+var/
+*.tsbuildinfo
+.impeccable/review/

@@ -1,0 +1,790 @@
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -3,110 +3,101 @@
+ import Link from "next/link";
+ import { useState } from "react";
+ import { api } from "@/lib/client";
+-import { GuestRestore } from "./guest-account";
+ import { SessionStatus, useSession } from "@/lib/session";
++
+ export default function Landing() {
+   const router = useRouter();
+   const { me, loading, refresh } = useSession();
+   const [error, setError] = useState("");
++  const [busy, setBusy] = useState(false);
+   async function guest() {
++    if (busy) return;
++    setBusy(true);
++    setError("");
+     try {
+       await api("/api/guest", {});
+       await refresh();
+       router.push("/play");
+     } catch (e) {
+       setError((e as Error).message);
++      setBusy(false);
+     }
+   }
+   return (
+-    <div className="landing">
+-      <div className="hero">
+-        <div className="eyebrow">01 / THE MATRIX IS YOURS TO CHANGE</div>
+-        <h1>
+-          Think fast.
+-          <br />
+-          <span>Shift the matrix.</span>
+-        </h1>
+-        <p>
+-          Two players. Four cards. Unlock up to eight.
+-          <br />
+-          Make your numbers bigger. Make theirs a problem.
++    <section className="landing">
++      <h1 className="landing-logo" aria-label="Mathrix">
++        <svg viewBox="0 0 640 320" aria-hidden="true">
++          <g
++            fill="none"
++            stroke="currentColor"
++            strokeLinecap="round"
++            strokeLinejoin="round"
++          >
++            <path d="M10 230 42 265 76 20H372" strokeWidth="8" />
++            <rect
++              x="96"
++              y="42"
++              width="256"
++              height="256"
++              rx="6"
++              strokeWidth="4"
++            />
++            <path d="M224 42V298M96 170H352" strokeWidth="4" />
++          </g>
++          <g textAnchor="middle" dominantBaseline="middle">
++            <text x="160" y="106">
++              M
++            </text>
++            <text x="288" y="106">
++              T
++            </text>
++            <text x="160" y="234">
++              H
++            </text>
++            <text x="288" y="234">
++              X
++            </text>
++          </g>
++          <text className="landing-logo-domain" x="386" y="290">
++            .APP
++          </text>
++        </svg>
++      </h1>
++      <p className="landing-tagline">
++        Competitive math game.
++        <span>… this says all.</span>
++      </p>
++      <div className="actions landing-actions">
++        {loading ? (
++          <SessionStatus />
++        ) : me?.registered ? (
++          <>
++            <Link className="button" href="/profile">
++              Profile
++            </Link>
++            <Link className="button primary" href="/play">
++              Play
++            </Link>
++          </>
++        ) : (
++          <>
++            <Link className="button" href="/auth">
++              Sign In
++            </Link>
++            <button className="primary" onClick={guest} disabled={busy}>
++              {busy ? "Entering…" : "Play as Guest"}
++            </button>
++          </>
++        )}
++        <Link className="button" href="/how-to-play">
++          How to Play
++        </Link>
++      </div>
++      {error && (
++        <p className="landing-error" role="alert">
++          {error}
+         </p>
+-        <div className="actions">
+-          {loading ? (
+-            <SessionStatus />
+-          ) : me?.registered ? (
+-            <>
+-              <Link className="button primary" href="/play">
+-                Play <span>↗</span>
+-              </Link>
+-              <Link className="button" href="/profile">
+-                Your profile
+-              </Link>
+-            </>
+-          ) : (
+-            <>
+-              <button className="primary" onClick={guest}>
+-                Play as guest <span>↗</span>
+-              </button>
+-              <Link className="button" href="/auth">
+-                Sign in / Create account
+-              </Link>
+-            </>
+-          )}
+-          <Link className="button" href="/play?mode=practice">
+-            Practice mode
+-          </Link>
+-        </div>
+-        <p className="practice-link-copy">
+-          Learn at your own pace against a very basic AI. No time limit.
+-        </p>
+-        {error && <p role="alert">{error}</p>}
+-        {!loading && !me?.registered && <GuestRestore />}
+-        <div className="micro">NO DOWNLOADS · NO ACCOUNT NEEDED</div>
+-      </div>
+-      <div className="hero-art" aria-label="Matrix game illustration">
+-        <div className="art-caption">
+-          <span>YOUR MATRIX</span>
+-          <b>Σ 24</b>
+-        </div>
+-        <div className="art-grid">
+-          {[3, 8, 5, 8].map((n, i) => (
+-            <div key={i}>{n}</div>
+-          ))}
+-        </div>
+-        <div className="floating-card">
+-          <small>EITHER / CELL</small>
+-          <strong>×2</strong>
+-          <span>DOUBLE DOWN</span>
+-        </div>
+-        <div className="orbit">+ − × Σ</div>
+-      </div>
+-      <div className="features">
+-        <article>
+-          <span>01</span>
+-          <h3>Build your advantage</h3>
+-          <p>
+-            Add rows and columns. Each new cell uses your total tiles destroyed
+-            by missed turns.
+-          </p>
+-        </article>
+-        <article>
+-          <span>02</span>
+-          <h3>Break their strategy</h3>
+-          <p>
+-            Negate a row, remove a column, or turn their best cell against them.
+-          </p>
+-        </article>
+-        <article>
+-          <span>03</span>
+-          <h3>Own the final sum</h3>
+-          <p>
+-            The higher signed sum wins. Negative numbers hurt. Every second
+-            counts.
+-          </p>
+-        </article>
+-      </div>
+-    </div>
++      )}
++    </section>
+   );
+ }
+--- a/app/layout.tsx
++++ b/app/layout.tsx
+@@ -18,27 +18,81 @@
+           <Navigation />
+           <main>{children}</main>
+           <footer>
+-            <span>FAST · TACTICAL · A LITTLE CHAOTIC</span>
+-            <div>
+-              <Link href="/privacy">Privacy Policy</Link>
+-              <Link href="/terms">Terms of Service</Link>
+-              <Link href="/settings">Preferences</Link>
+-              <a
+-                href="https://discord.gg/y5x6RXMva8"
+-                target="_blank"
+-                rel="noopener noreferrer"
+-              >
+-                <svg
+-                  width="16"
+-                  height="16"
+-                  viewBox="0 0 24 24"
+-                  fill="currentColor"
+-                  aria-hidden="true"
++            <span className="footer-tagline">
++              FAST · TACTICAL · A LITTLE CHAOTIC
++            </span>
++            <div className="footer-links">
++              <div className="footer-legal">
++                <Link href="/privacy">Privacy Policy</Link>
++                <Link href="/terms">Terms of Service</Link>
++                <Link className="footer-preferences" href="/settings">
++                  Preferences
++                </Link>
++              </div>
++              <div className="footer-social">
++                <a
++                  className="footer-home-only"
++                  href="mailto:contact@mathrix.app"
++                  aria-label="Contact Mathrix"
++                  title="Email"
+                 >
+-                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.211.375-.457.88-.626 1.281a18.416 18.416 0 0 0-5.414 0 12.64 12.64 0 0 0-.634-1.281A19.736 19.736 0 0 0 3.87 4.373C.779 8.945-.059 13.403.36 17.798a19.9 19.9 0 0 0 5.993 3.03c.486-.661.92-1.36 1.293-2.096a12.92 12.92 0 0 1-2.037-.988c.171-.124.338-.253.5-.386 3.928 1.818 8.196 1.818 12.077 0 .164.133.331.262.5.386-.647.388-1.33.72-2.04.99.375.735.806 1.437 1.294 2.096a19.839 19.839 0 0 0 5.996-3.032c.491-5.095-.838-9.512-3.62-13.428ZM8.02 15.108c-1.18 0-2.148-1.077-2.148-2.388 0-1.311.948-2.39 2.148-2.39 1.2 0 2.168 1.078 2.148 2.39.002 1.311-.948 2.388-2.148 2.388Zm7.937 0c-1.18 0-2.148-1.077-2.148-2.388 0-1.311.948-2.39 2.148-2.39 1.2 0 2.168 1.078 2.148 2.39 0 1.311-.948 2.388-2.148 2.388Z" />
+-                </svg>
+-                Discord
+-              </a>
++                  <svg
++                    width="20"
++                    height="20"
++                    viewBox="0 0 24 24"
++                    fill="none"
++                    stroke="currentColor"
++                    strokeWidth="1.7"
++                    aria-hidden="true"
++                  >
++                    <rect x="3" y="5" width="18" height="14" rx="2" />
++                    <path d="m3 6 9 7 9-7" />
++                  </svg>
++                </a>
++                <a
++                  className="footer-home-only"
++                  href="https://www.reddit.com/r/mathrix/"
++                  target="_blank"
++                  rel="noopener noreferrer"
++                  aria-label="Reddit"
++                  title="Reddit"
++                >
++                  <svg
++                    width="20"
++                    height="20"
++                    viewBox="0 0 24 24"
++                    fill="none"
++                    stroke="currentColor"
++                    strokeWidth="1.5"
++                    strokeLinecap="round"
++                    aria-hidden="true"
++                  >
++                    <ellipse cx="12" cy="14" rx="8" ry="6" />
++                    <path d="m12 8 1.5-5 4 1M4.7 10C1 7 0 13 4 13m15.3-3c3.7-3 4.7 3 .7 3M8.5 16.5c1.8 1.7 5.2 1.7 7 0" />
++                    <circle cx="19" cy="4.5" r="1.8" />
++                    <circle cx="8.5" cy="13" r="1" fill="currentColor" />
++                    <circle cx="15.5" cy="13" r="1" fill="currentColor" />
++                  </svg>
++                </a>
++                <a
++                  href="https://discord.gg/y5x6RXMva8"
++                  target="_blank"
++                  rel="noopener noreferrer"
++                  aria-label="Discord"
++                  title="Discord"
++                >
++                  <svg
++                    width="16"
++                    height="16"
++                    viewBox="0 0 24 24"
++                    fill="currentColor"
++                    aria-hidden="true"
++                  >
++                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515c-.211.375-.457.88-.626 1.281a18.416 18.416 0 0 0-5.414 0 12.64 12.64 0 0 0-.634-1.281A19.736 19.736 0 0 0 3.87 4.373C.779 8.945-.059 13.403.36 17.798a19.9 19.9 0 0 0 5.993 3.03c.486-.661.92-1.36 1.293-2.096a12.92 12.92 0 0 1-2.037-.988c.171-.124.338-.253.5-.386 3.928 1.818 8.196 1.818 12.077 0 .164.133.331.262.5.386-.647.388-1.33.72-2.04.99.375.735.806 1.437 1.294 2.096a19.839 19.839 0 0 0 5.996-3.032c.491-5.095-.838-9.512-3.62-13.428ZM8.02 15.108c-1.18 0-2.148-1.077-2.148-2.388 0-1.311.948-2.39 2.148-2.39 1.2 0 2.168 1.078 2.148 2.39.002 1.311-.948 2.388-2.148 2.388Zm7.937 0c-1.18 0-2.148-1.077-2.148-2.388 0-1.311.948-2.39 2.148-2.39 1.2 0 2.168 1.078 2.148 2.39 0 1.311-.948 2.388-2.148 2.388Z" />
++                  </svg>
++                  <span className="footer-discord-label">Discord</span>
++                </a>
++              </div>
+             </div>
+           </footer>
+         </SessionProvider>
+--- a/app/style.css
++++ b/app/style.css
+@@ -265,25 +265,104 @@
+   font-size: 14px;
+   letter-spacing: 0;
+ }
++footer .footer-home-only {
++  display: none;
++}
++body:has(.landing) {
++  display: flex;
++  flex-direction: column;
++  min-height: 100svh;
++}
++body:has(.landing) > .nav,
++body:has(.landing) .footer-tagline,
++body:has(.landing) .footer-preferences,
++body:has(.landing) .footer-discord-label {
++  display: none;
++}
++body:has(.landing) > main {
++  display: grid;
++  place-items: center;
++  flex: 1;
++  min-height: 0;
++}
++body:has(.landing) > footer {
++  width: 100%;
++  margin: 0 auto;
++  border: 0;
++  flex-shrink: 0;
++}
++body:has(.landing) .footer-links {
++  width: 100%;
++  justify-content: space-between;
++}
++body:has(.landing) .footer-social {
++  gap: 12px;
++}
++body:has(.landing) .footer-social a {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  width: 42px;
++  height: 42px;
++  border: 1px solid var(--line);
++  border-radius: 8px;
++}
++body:has(.landing) .footer-social svg {
++  width: 20px;
++  height: 20px;
++}
+ .landing {
+-  max-width: 1184px;
+-  padding: 85px 0 40px;
++  width: min(100%, 760px);
+   margin: auto;
+-  display: grid;
+-  grid-template-columns: 1.15fr 1fr;
+-  gap: 75px;
+-}
+-.hero h1 {
+-  font-size: clamp(42px, 5.7vw, 74px);
+-  line-height: 1.03;
+-  letter-spacing: -3.5px;
+-}
+-.hero h1 span {
++  padding: 48px 24px;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  text-align: center;
++}
++.landing-logo {
++  width: min(560px, 52svh, 100%);
++  margin: 0 0 40px;
+   color: var(--cyan);
+-}
+-.hero p {
+-  margin: 28px 0;
+-  font-size: 18px;
++  line-height: 1;
++}
++.landing-logo svg {
++  display: block;
++  width: 100%;
++  height: auto;
++}
++.landing-logo text {
++  fill: var(--text);
++  font: 74px var(--mono);
++  letter-spacing: 0;
++}
++.landing-logo .landing-logo-domain {
++  font-size: 58px;
++}
++.landing-tagline {
++  margin: 0 0 36px;
++  color: var(--text);
++  font-size: clamp(26px, 3vw, 38px);
++  line-height: 1.25;
++}
++.landing-tagline span {
++  display: block;
++  margin-top: 12px;
++  color: var(--muted);
++  font-size: clamp(18px, 2vw, 24px);
++  text-align: right;
++}
++.landing .landing-actions {
++  margin: 0;
++  justify-content: center;
++}
++.landing-actions > .button,
++.landing-actions > button {
++  min-width: 160px;
++  min-height: 46px;
++}
++.landing-error {
++  margin: 20px 0 0;
+ }
+ .actions {
+   display: flex;
+@@ -291,105 +370,6 @@
+   flex-wrap: wrap;
+   align-items: center;
+   margin: 20px 0;
+-}
+-.micro {
+-  font-family: var(--mono);
+-  font-size: 10px;
+-  letter-spacing: 1.5px;
+-  color: var(--muted);
+-  margin-top: 25px;
+-}
+-.hero-art {
+-  position: relative;
+-  padding: 45px 60px 30px 25px;
+-  transform: rotate(-5deg);
+-  border-radius: 30px;
+-  background: linear-gradient(130deg, #a3f2ce08, #a3f2ce00);
+-  border: 1px solid #a3f2ce15;
+-  align-self: center;
+-}
+-.art-caption {
+-  display: flex;
+-  justify-content: space-between;
+-  font-family: var(--mono);
+-  font-size: 12px;
+-  margin-bottom: 16px;
+-  color: var(--cyan);
+-}
+-.art-grid {
+-  display: grid;
+-  grid-template-columns: 1fr 1fr;
+-  gap: 10px;
+-}
+-.art-grid div {
+-  display: grid;
+-  place-items: center;
+-  background: #14372e;
+-  color: var(--cyan);
+-  height: 125px;
+-  font-family: var(--mono);
+-  font-size: 65px;
+-  border: 1px solid #477765;
+-  border-radius: 10px;
+-  box-shadow: inset 0 0 30px #a3f2ce0b;
+-}
+-.floating-card {
+-  position: absolute;
+-  right: -5px;
+-  bottom: -25px;
+-  width: 145px;
+-  height: 195px;
+-  background: #c9b5fd;
+-  color: #181126;
+-  display: flex;
+-  flex-direction: column;
+-  justify-content: space-between;
+-  border-radius: 10px;
+-  padding: 18px;
+-  transform: rotate(15deg);
+-  box-shadow: 0 18px 40px #0008;
+-}
+-.floating-card strong {
+-  font-family: var(--mono);
+-  font-size: 58px;
+-}
+-.floating-card small {
+-  color: #443753;
+-  font-size: 9px;
+-}
+-.floating-card span {
+-  font-size: 10px;
+-  font-weight: 700;
+-}
+-.orbit {
+-  position: absolute;
+-  top: -32px;
+-  right: 0;
+-  color: var(--cyan);
+-  font-family: var(--mono);
+-  font-size: 24px;
+-  letter-spacing: 18px;
+-  opacity: 0.35;
+-}
+-.features {
+-  grid-column: 1/-1;
+-  display: grid;
+-  grid-template-columns: repeat(3, 1fr);
+-  gap: 45px;
+-  padding-top: 60px;
+-  border-top: 1px solid var(--line);
+-  margin-top: 45px;
+-}
+-.features article > span {
+-  color: var(--cyan);
+-  font: 12px var(--mono);
+-}
+-.features h3 {
+-  margin-top: 15px;
+-}
+-.features p {
+-  font-size: 14px;
+-  margin-bottom: 0;
+ }
+ .page {
+   max-width: 1100px;
+@@ -1596,27 +1576,6 @@
+     transform: translateY(80px) rotate(22deg) scale(0.2);
+   }
+ }
+-@media (max-width: 1100px) {
+-  .landing {
+-    padding: 65px 40px 35px;
+-    gap: 40px;
+-  }
+-  .hero-art {
+-    padding-right: 35px;
+-  }
+-  .hero-art .art-grid div {
+-    height: 110px;
+-  }
+-  .floating-card {
+-    right: -15px;
+-    width: 125px;
+-    height: 170px;
+-  }
+-  .hero .actions {
+-    flex-direction: column;
+-    align-items: flex-start;
+-  }
+-}
+ @media (max-width: 700px) {
+   .nav {
+     padding: 0 20px;
+@@ -1639,36 +1598,39 @@
+     max-width: 110px;
+   }
+   .landing {
+-    grid-template-columns: 1fr;
+-    padding: 50px 25px 30px;
+-    gap: 50px;
+-  }
+-  .hero h1 {
+-    font-size: 52px;
+-    letter-spacing: -2px;
+-  }
+-  .hero p {
+-    font-size: 16px;
+-  }
+-  .hero .actions {
+-    flex-direction: row;
+-  }
+-  .hero-art {
+-    max-width: 350px;
+-    margin: auto;
+-    transform: rotate(-3deg);
+-  }
+-  .hero-art .art-grid div {
+-    height: 105px;
+-  }
+-  .features {
+-    grid-template-columns: 1fr;
+-    gap: 25px;
+-    padding-top: 35px;
+-    margin-top: 15px;
+-  }
+-  .features h3 {
+-    margin: 8px 0;
++    padding: 16px 20px;
++  }
++  .landing-logo {
++    max-width: 260px;
++    margin-bottom: 24px;
++  }
++  .landing-tagline {
++    margin-bottom: 24px;
++  }
++  .landing-tagline span {
++    margin-top: 8px;
++  }
++  .landing .landing-actions {
++    width: min(100%, 320px);
++    flex-direction: column;
++    gap: 10px;
++  }
++  .landing-actions > .button,
++  .landing-actions > button {
++    width: 100%;
++    min-height: 44px;
++  }
++  body:has(.landing) > footer {
++    padding: 16px 20px;
++  }
++  body:has(.landing) .footer-links {
++    flex-direction: column;
++    gap: 12px;
++  }
++  body:has(.landing) .footer-legal {
++    justify-content: center;
++    gap: 16px;
++    font-size: 12px;
+   }
+   .page {
+     padding: 35px 20px;
+--- a/app/how-to-play/page.tsx
++++ b/app/how-to-play/page.tsx
+@@ -7,6 +7,9 @@
+     <section className="page howto">
+       <div className="eyebrow">LEARN IN 30 SECONDS</div>
+       <h1>Make your sum count.</h1>
++      <Link className="button" href="/play?mode=practice">
++        Practice mode
++      </Link>
+       <div className="howto-grid">
+         <article>
+           <h2>01. Start equal</h2>
+--- a/tests/session.e2e.ts
++++ b/tests/session.e2e.ts
+@@ -52,13 +52,16 @@
+   await expect(page.getByLabel(`Account: ${player.name}`)).toBeVisible();
+   await page.locator(".brand").click();
+   await expect(
+-    page.getByRole("link", { name: "Your profile", exact: true }),
+-  ).toBeVisible();
+-  await expect(page.getByRole("button", { name: "Play as guest" })).toHaveCount(
+-    0,
+-  );
++    page.locator("main").getByRole("link", { name: "Profile", exact: true }),
++  ).toBeVisible();
++  await expect(
++    page.getByRole("button", { name: /^Play as guest$/i }),
++  ).toHaveCount(0);
+   await page.reload();
+-  await page.getByRole("link", { name: "Your profile", exact: true }).click();
++  await page
++    .locator("main")
++    .getByRole("link", { name: "Profile", exact: true })
++    .click();
+   await expect(
+     page.getByRole("heading", { name: player.name, exact: true }),
+   ).toBeVisible();
+@@ -77,7 +80,12 @@
+   try {
+     const reopened = await restored.newPage();
+     await reopened.goto(origin);
+-    await expect(reopened.getByLabel(`Account: ${player.name}`)).toBeVisible();
++    await expect(
++      reopened
++        .locator("main")
++        .getByRole("link", { name: "Profile", exact: true }),
++    ).toBeVisible();
++    await expect(reopened.getByLabel(`Account: ${player.name}`)).toBeHidden();
+     await reopened.goto(`${origin}/profile`);
+     await expect(
+       reopened.getByRole("heading", { name: player.name, exact: true }),
+@@ -114,11 +122,11 @@
+   ).toHaveCount(0);
+   await page.getByRole("button", { name: "Sign out", exact: true }).click();
+   await expect(
+-    page.getByRole("button", { name: "Play as guest" }),
+-  ).toBeVisible();
+-  await page
+-    .locator("nav")
+-    .getByRole("link", { name: "Sign in", exact: true })
++    page.getByRole("button", { name: /^Play as guest$/i }),
++  ).toBeVisible();
++  await page
++    .locator("main")
++    .getByRole("link", { name: "Sign In", exact: true })
+     .click();
+   await page.getByLabel("Email", { exact: true }).fill(email);
+   await page.getByLabel("Password", { exact: true }).fill(password);
+@@ -146,6 +154,10 @@
+   await expect(page).toHaveURL(/\/play$/);
+   const { name } = await (await context.request.get("/api/me")).json();
+   await page.locator(".brand").click();
++  await page
++    .locator("main")
++    .getByRole("link", { name: "Profile", exact: true })
++    .click();
+   const menu = page.locator(".account-menu");
+   await page.getByLabel(`Account: ${name}`).click();
+   for (const label of ["Profile", "Preferences", "Admin"])
+@@ -182,7 +194,7 @@
+   await page.unroute("**/api/auth/sign-out");
+   await menu.getByRole("button", { name: "Sign out", exact: true }).click();
+   await expect(
+-    page.getByRole("button", { name: "Play as guest" }),
++    page.getByRole("button", { name: /^Play as guest$/i }),
+   ).toBeVisible();
+   await other.bringToFront();
+   await refresh(other);
+@@ -213,12 +225,20 @@
+     await expect(page.locator("main").getByRole("status")).toContainText(
+       "Checking session",
+     );
+-    await expect(page.getByRole("link", { name: /Sign in/ })).toHaveCount(0);
++    await expect(page.getByRole("link", { name: /Sign in/i })).toHaveCount(0);
+     await expect(
+-      page.getByRole("button", { name: "Play as guest" }),
++      page.getByRole("button", { name: /^Play as guest$/i }),
+     ).toHaveCount(0);
+     release();
+-    await expect(page.getByLabel(`Account: ${player.name}`)).toBeVisible();
++    if (path === "/") {
++      await expect(
++        page
++          .locator("main")
++          .getByRole("link", { name: "Profile", exact: true }),
++      ).toBeVisible();
++      await expect(page.getByLabel(`Account: ${player.name}`)).toBeHidden();
++    } else
++      await expect(page.getByLabel(`Account: ${player.name}`)).toBeVisible();
+     if (path === "/profile")
+       await expect(
+         page.getByRole("heading", { name: player.name, exact: true }),
+@@ -236,7 +256,7 @@
+     page.getByRole("button", { name: "Retry session" }),
+   ).toBeVisible();
+   await expect(page.getByLabel(`Account: ${player.name}`)).toBeVisible();
+-  await expect(page.getByRole("link", { name: /Sign in/ })).toHaveCount(0);
++  await expect(page.getByRole("link", { name: /Sign in/i })).toHaveCount(0);
+   await page.unroute("**/api/me");
+   await page.getByRole("button", { name: "Retry session" }).click();
+   await expect(page.getByRole("button", { name: "Retry session" })).toHaveCount(
+@@ -249,7 +269,7 @@
+   await expect(
+     page.getByRole("button", { name: "Retry profile" }),
+   ).toBeVisible();
+-  await expect(page.getByRole("link", { name: /Sign in/ })).toHaveCount(0);
++  await expect(page.getByRole("link", { name: /Sign in/i })).toHaveCount(0);
+   await page.unroute("**/api/profile");
+   await page.getByRole("button", { name: "Retry profile" }).click();
+   await expect(
+@@ -290,9 +310,9 @@
+     page.getByRole("heading", { name: "Enter the matrix" }),
+   ).toBeVisible();
+   await expect(
+-    page.getByRole("button", { name: "Play as guest" }),
+-  ).toBeVisible();
+-  await page.getByRole("button", { name: "Play as guest" }).click();
++    page.getByRole("button", { name: /^Play as guest$/i }),
++  ).toBeVisible();
++  await page.getByRole("button", { name: /^Play as guest$/i }).click();
+   await expect(
+     page.getByRole("status").filter({ hasText: "Ready to play" }),
+   ).toBeVisible();
+--- a/tests/practice.e2e.ts
++++ b/tests/practice.e2e.ts
+@@ -119,6 +119,7 @@
+     });
+     await page.clock.install({ time: new Date("2026-10-03T12:00:00Z") });
+     await page.goto("/");
++    await page.getByRole("link", { name: "How to Play", exact: true }).click();
+     await page
+       .getByRole("link", { name: "Practice mode", exact: true })
+       .click();
+--- a/tests/game.e2e.ts
++++ b/tests/game.e2e.ts
+@@ -710,7 +710,9 @@
+   try {
+     for (const p of [a, b]) {
+       await p.goto("/");
+-      await p.getByRole("button", { name: "Play as guest" }).click();
++      await p
++        .getByRole("button", { name: "Play as Guest", exact: true })
++        .click();
+       await expect(
+         p.getByRole("button", { name: "Ranked mode" }),
+       ).toBeVisible();
